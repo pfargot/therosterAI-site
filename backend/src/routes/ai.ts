@@ -1,8 +1,6 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // Analyze uploaded image
 router.post('/analyze-image', async (req: any, res: any) => {
@@ -95,48 +93,8 @@ router.post('/insights', async (req: any, res: any) => {
   try {
     const userId = req.user?.userId;
 
-    // Get user's evaluation data if authenticated
-    let evaluations = [];
-    if (userId) {
-      evaluations = await prisma.dateEvaluation.findMany({
-        where: { userId },
-        include: {
-          date: {
-            include: {
-              profile: true
-            }
-          }
-        }
-      });
-    }
-
-    // Generate insights based on data or provide general advice
-    const insights = userId && evaluations.length > 0 ? [
-      {
-        title: "Chemistry Pattern",
-        content: "Your dates with chemistry ratings above 7 tend to lead to second dates. Focus on building genuine connections.",
-        type: "pattern",
-        data: { chemistryThreshold: 7, successRate: 0.8 }
-      },
-      {
-        title: "Communication Style",
-        content: "You thrive with partners who engage in deep conversations. Look for intellectual compatibility.",
-        type: "trend",
-        data: { communicationType: "deep", compatibility: "high" }
-      },
-      {
-        title: "Red Flag Awareness",
-        content: "You're good at spotting red flags early. Trust your instincts when something feels off.",
-        type: "strength",
-        data: { redFlagDetection: "excellent" }
-      },
-      {
-        title: "Date Planning",
-        content: "Your thoughtful date planning shows effort and care. This quality is attractive to potential partners.",
-        type: "strength",
-        data: { planningStyle: "thoughtful" }
-      }
-    ] : [
+    // For MVP, provide general insights (no database needed)
+    const insights = [
       {
         title: "Getting Started",
         content: "Start adding dates to your roster to get personalized insights! Track your chemistry ratings and conversation quality.",
@@ -160,6 +118,18 @@ router.post('/insights', async (req: any, res: any) => {
         content: "It's better to have fewer meaningful connections than many superficial ones. Focus on depth.",
         type: "philosophy",
         data: { approach: "quality-focused" }
+      },
+      {
+        title: "Chemistry Pattern",
+        content: "Your dates with chemistry ratings above 7 tend to lead to second dates. Focus on building genuine connections.",
+        type: "pattern",
+        data: { chemistryThreshold: 7, successRate: 0.8 }
+      },
+      {
+        title: "Communication Style",
+        content: "You thrive with partners who engage in deep conversations. Look for intellectual compatibility.",
+        type: "trend",
+        data: { communicationType: "deep", compatibility: "high" }
       }
     ];
 

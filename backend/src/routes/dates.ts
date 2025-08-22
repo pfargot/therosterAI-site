@@ -1,40 +1,25 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
 
 const router = Router();
-const prisma = new PrismaClient();
+
+// In-memory storage for MVP (replace with database later)
+let datesStorage: any[] = [];
 
 // Get all dates for current user
 router.get('/', async (req: any, res: any) => {
   try {
-    const userId = req.user.userId;
-    const { page = 1, limit = 10, profileId } = req.query;
-
-    const where: any = { userId };
-    if (profileId) {
-      where.profileId = profileId;
-    }
-
-    const dates = await prisma.date.findMany({
-      where,
-      include: {
-        profile: true,
-        evaluation: true
-      },
-      orderBy: { date: 'desc' },
-      skip: (page - 1) * limit,
-      take: parseInt(limit)
-    });
-
-    const total = await prisma.date.count({ where });
+    const userId = req.user?.userId || 'test-user-id';
+    
+    // Filter dates by user (for MVP, just return all)
+    const userDates = datesStorage.filter(date => date.userId === userId);
 
     res.json({
-      dates,
+      dates: userDates,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        pages: Math.ceil(total / limit)
+        page: 1,
+        limit: userDates.length,
+        total: userDates.length,
+        pages: 1
       }
     });
   } catch (error) {
@@ -49,23 +34,17 @@ router.get('/', async (req: any, res: any) => {
 // Create a new date
 router.post('/', async (req: any, res: any) => {
   try {
-    const userId = req.user.userId;
-    const { profileId, dateNumber, location, activity, duration, date } = req.body;
+    const userId = req.user?.userId || 'test-user-id';
+    const dateData = req.body;
 
-    const newDate = await prisma.date.create({
-      data: {
-        userId,
-        profileId,
-        dateNumber,
-        location,
-        activity,
-        duration,
-        date: new Date(date)
-      },
-      include: {
-        profile: true
-      }
-    });
+    const newDate = {
+      id: Date.now().toString(),
+      userId,
+      ...dateData,
+      createdAt: new Date().toISOString()
+    };
+
+    datesStorage.push(newDate);
 
     res.status(201).json({
       message: 'Date created successfully',
@@ -83,19 +62,10 @@ router.post('/', async (req: any, res: any) => {
 // Get a specific date
 router.get('/:id', async (req: any, res: any) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user?.userId || 'test-user-id';
     const { id } = req.params;
 
-    const date = await prisma.date.findFirst({
-      where: {
-        id,
-        userId
-      },
-      include: {
-        profile: true,
-        evaluation: true
-      }
-    });
+    const date = datesStorage.find(d => d.id === id && d.userId === userId);
 
     if (!date) {
       return res.status(404).json({
@@ -117,33 +87,24 @@ router.get('/:id', async (req: any, res: any) => {
 // Update a date
 router.put('/:id', async (req: any, res: any) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user?.userId || 'test-user-id';
     const { id } = req.params;
-    const { location, activity, duration, date, isCompleted } = req.body;
+    const updateData = req.body;
 
-    const updatedDate = await prisma.date.updateMany({
-      where: {
-        id,
-        userId
-      },
-      data: {
-        location,
-        activity,
-        duration,
-        date: date ? new Date(date) : undefined,
-        isCompleted
-      }
-    });
+    const dateIndex = datesStorage.findIndex(d => d.id === id && d.userId === userId);
 
-    if (updatedDate.count === 0) {
+    if (dateIndex === -1) {
       return res.status(404).json({
         error: 'Date not found',
         message: 'The specified date could not be found'
       });
     }
 
+    datesStorage[dateIndex] = { ...datesStorage[dateIndex], ...updateData };
+
     res.json({
-      message: 'Date updated successfully'
+      message: 'Date updated successfully',
+      date: datesStorage[dateIndex]
     });
   } catch (error) {
     console.error('Update date error:', error);
@@ -157,22 +118,19 @@ router.put('/:id', async (req: any, res: any) => {
 // Delete a date
 router.delete('/:id', async (req: any, res: any) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user?.userId || 'test-user-id';
     const { id } = req.params;
 
-    const deletedDate = await prisma.date.deleteMany({
-      where: {
-        id,
-        userId
-      }
-    });
+    const dateIndex = datesStorage.findIndex(d => d.id === id && d.userId === userId);
 
-    if (deletedDate.count === 0) {
+    if (dateIndex === -1) {
       return res.status(404).json({
         error: 'Date not found',
         message: 'The specified date could not be found'
       });
     }
+
+    datesStorage.splice(dateIndex, 1);
 
     res.json({
       message: 'Date deleted successfully'
