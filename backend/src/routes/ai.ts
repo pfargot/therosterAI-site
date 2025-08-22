@@ -4,18 +4,22 @@ import { PrismaClient } from '@prisma/client';
 const router = Router();
 const prisma = new PrismaClient();
 
-// Analyze profile image
+// Analyze uploaded image
 router.post('/analyze-image', async (req: any, res: any) => {
   try {
     const { imageUrl } = req.body;
 
-    // TODO: Implement Google Cloud Vision API integration
-    // For now, provide mock analysis based on image characteristics
-    
+    if (!imageUrl) {
+      return res.status(400).json({
+        error: 'Missing image URL',
+        message: 'Please provide an image URL to analyze'
+      });
+    }
+
     // Simulate AI analysis based on image URL
     const imageHash = imageUrl ? imageUrl.split('/').pop() : '';
     const seed = imageHash ? imageHash.charCodeAt(0) : Math.random();
-    
+
     const analysis = {
       attractiveness: Math.floor((seed % 3) + 7), // 7-9 range
       confidence: Math.floor((seed % 3) + 6), // 6-8 range
@@ -38,7 +42,7 @@ router.post('/analyze-image', async (req: any, res: any) => {
     };
 
     res.json({
-      message: 'Image analyzed successfully',
+      message: 'Image analysis completed',
       analysis
     });
   } catch (error) {
@@ -53,17 +57,24 @@ router.post('/analyze-image', async (req: any, res: any) => {
 // Generate dating advice
 router.post('/advice', async (req: any, res: any) => {
   try {
-    const userId = req.user.userId;
-    const { context, evaluationId } = req.body;
+    const { context, question } = req.body;
 
-    // TODO: Implement OpenAI GPT integration
-    // This would generate personalized dating advice based on user's history
-    
+    // Mock AI advice generation
     const advice = {
-      title: "Based on your recent dates...",
-      content: "You seem to have great chemistry with people who share your interests in travel and music. Consider focusing on these topics in your conversations.",
-      type: "pattern",
-      confidence: 0.85
+      title: "Dating Strategy",
+      content: "Focus on building genuine connections rather than playing games. Be authentic and communicate openly about your intentions.",
+      tips: [
+        "Ask meaningful questions to understand their values",
+        "Share personal stories to create emotional connection",
+        "Pay attention to body language and energy",
+        "Don't rush - let the relationship develop naturally"
+      ],
+      redFlags: [
+        "They avoid answering personal questions",
+        "Inconsistent communication patterns",
+        "They seem too good to be true",
+        "They pressure you to move too fast"
+      ]
     };
 
     res.json({

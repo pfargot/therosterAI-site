@@ -3,7 +3,10 @@
   "builds": [
     {
       "src": "backend/src/index.ts",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["backend/prisma/**/*"]
+      }
     },
     {
       "src": "frontend/package.json",
@@ -24,7 +27,11 @@
     }
   ],
   "env": {
-    "DATABASE_URL": "@database-url",
-    "JWT_SECRET": "@jwt-secret"
+    "NODE_ENV": "production"
+  },
+  "functions": {
+    "backend/src/index.ts": {
+      "maxDuration": 30
+    }
   }
 } 
