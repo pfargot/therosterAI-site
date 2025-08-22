@@ -76,7 +76,7 @@ app.get('/api/test', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', authMiddleware, userRoutes);
 app.use('/api/profiles', authMiddleware, profileRoutes);
-app.use('/api/dates', authMiddleware, dateRoutes);
+app.use('/api/dates', dateRoutes); // Remove authMiddleware since we handle auth manually
 app.use('/api/evaluations', authMiddleware, evaluationRoutes);
 app.use('/api/insights', authMiddleware, insightRoutes);
 app.use('/api/integrations', authMiddleware, integrationRoutes);
