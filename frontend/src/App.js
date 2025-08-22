@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
+// Backend URL configuration
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
+
 function App() {
   const [dates, setDates] = useState([]);
   const [newDate, setNewDate] = useState({ 
@@ -28,6 +31,7 @@ function App() {
   const [uploadingImage, setUploadingImage] = useState(false);
 
   // Check if user is logged in on app start
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -37,7 +41,7 @@ function App() {
 
   const verifyToken = async (token) => {
     try {
-      const response = await fetch('http://localhost:5001/api/auth/verify', {
+      const response = await fetch(`${BACKEND_URL}/api/auth/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -60,7 +64,7 @@ function App() {
 
   const loadUserDates = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/dates', {
+      const response = await fetch(`${BACKEND_URL}/api/dates`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -81,7 +85,7 @@ function App() {
     
     try {
       const endpoint = isLogin ? '/login' : '/register';
-      const response = await fetch(`http://localhost:5001/api/auth${endpoint}`, {
+      const response = await fetch(`${BACKEND_URL}/api/auth${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(authForm)
@@ -152,7 +156,7 @@ function App() {
 
   const saveDateToBackend = async (dateData) => {
     try {
-      const response = await fetch('http://localhost:5001/api/dates', {
+      const response = await fetch(`${BACKEND_URL}/api/dates`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -173,7 +177,7 @@ function App() {
 
   const testAPI = async () => {
     try {
-      const response = await fetch('http://localhost:5001/health');
+      const response = await fetch(`${BACKEND_URL}/health`);
       if (response.ok) {
         alert('✅ Backend is running!');
       } else {
@@ -186,7 +190,7 @@ function App() {
 
   const getInsights = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/ai/insights', {
+      const response = await fetch(`${BACKEND_URL}/api/ai/insights`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -212,7 +216,7 @@ function App() {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await fetch('http://localhost:5001/api/upload/profile-image', {
+      const response = await fetch(`${BACKEND_URL}/api/upload/profile-image`, {
         method: 'POST',
         body: formData
       });
@@ -222,7 +226,7 @@ function App() {
         setNewDate({ ...newDate, profileImage: data.imageUrl });
         
         // Analyze the uploaded image
-        const analysisResponse = await fetch('http://localhost:5001/api/ai/analyze-image', {
+        const analysisResponse = await fetch(`${BACKEND_URL}/api/ai/analyze-image`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ imageUrl: data.imageUrl })
@@ -395,7 +399,7 @@ function App() {
           {newDate.profileImage && (
             <div className="image-preview">
               <img 
-                src={`http://localhost:5001${newDate.profileImage}`} 
+                src={`${BACKEND_URL}${newDate.profileImage}`} 
                 alt="Profile" 
                 className="profile-image"
               />
@@ -550,7 +554,7 @@ function App() {
               </div>
               {date.profileImage && (
                 <img 
-                  src={`http://localhost:5001${date.profileImage}`} 
+                  src={`${BACKEND_URL}${date.profileImage}`} 
                   alt="Profile" 
                   className="date-image"
                 />
