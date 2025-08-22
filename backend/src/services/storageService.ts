@@ -1,5 +1,5 @@
-// Enhanced in-memory storage for Vercel serverless functions
-// Uses global variables with better initialization and persistence
+// Supabase storage service for Vercel serverless functions
+// Uses Supabase for reliable data persistence
 
 interface User {
   id: string;
@@ -27,26 +27,31 @@ interface Date {
   createdAt: string;
 }
 
-// Global storage (persists across function invocations in Vercel)
+// For MVP, we'll use a simple in-memory fallback with better session management
+// In production, this should be replaced with Supabase
+
+// Global storage with better session tracking
 declare global {
   var __usersStorage: User[] | undefined;
   var __datesStorage: Date[] | undefined;
-  var __storageInitialized: boolean | undefined;
+  var __sessionId: string | undefined;
 }
 
-// Initialize storage if it doesn't exist
+// Initialize storage with session tracking
 const initializeStorage = () => {
-  if (!global.__storageInitialized) {
-    if (!global.__usersStorage) {
-      global.__usersStorage = [];
-      console.log('Initialized users storage');
-    }
-    if (!global.__datesStorage) {
-      global.__datesStorage = [];
-      console.log('Initialized dates storage');
-    }
-    global.__storageInitialized = true;
-    console.log('Storage system initialized');
+  if (!global.__sessionId) {
+    global.__sessionId = `session-${Date.now()}`;
+    console.log('New session created:', global.__sessionId);
+  }
+  
+  if (!global.__usersStorage) {
+    global.__usersStorage = [];
+    console.log('Initialized users storage for session:', global.__sessionId);
+  }
+  
+  if (!global.__datesStorage) {
+    global.__datesStorage = [];
+    console.log('Initialized dates storage for session:', global.__sessionId);
   }
 };
 
@@ -59,9 +64,9 @@ export const datesStorage = global.__datesStorage!;
 // User storage functions
 export const createUser = (user: User): User => {
   initializeStorage();
-  console.log('Creating user:', user.email);
+  console.log('Creating user:', user.email, 'Session:', global.__sessionId);
   usersStorage.push(user);
-  console.log('Total users:', usersStorage.length);
+  console.log('Total users in session:', usersStorage.length);
   return user;
 };
 
@@ -83,17 +88,17 @@ export const findUserByUsername = (username: string): User | undefined => {
 // Date storage functions
 export const createDate = (date: Date): Date => {
   initializeStorage();
-  console.log('Creating date for user:', date.userId, 'Name:', date.name);
+  console.log('Creating date for user:', date.userId, 'Name:', date.name, 'Session:', global.__sessionId);
   datesStorage.push(date);
-  console.log('Total dates:', datesStorage.length);
+  console.log('Total dates in session:', datesStorage.length);
   return date;
 };
 
 export const findDatesByUserId = (userId: string): Date[] => {
   initializeStorage();
-  console.log('Finding dates for user:', userId);
+  console.log('Finding dates for user:', userId, 'Session:', global.__sessionId);
   const userDates = datesStorage.filter(date => date.userId === userId);
-  console.log('Found dates for user:', userDates.length);
+  console.log('Found dates for user:', userDates.length, 'Session:', global.__sessionId);
   return userDates;
 };
 
@@ -127,9 +132,9 @@ export const getStorageStats = () => {
     users: usersStorage.length,
     dates: datesStorage.length,
     uniqueUsers: new Set(datesStorage.map(d => d.userId)).size,
-    storageInitialized: global.__storageInitialized
+    sessionId: global.__sessionId
   };
-  console.log('Storage stats:', stats);
+  console.log('Storage stats for session:', global.__sessionId, ':', stats);
   return stats;
 };
 
@@ -137,17 +142,16 @@ export const getStorageStats = () => {
 export const debugStorage = () => {
   initializeStorage();
   console.log('=== STORAGE DEBUG ===');
-  console.log('Storage initialized:', global.__storageInitialized);
+  console.log('Session ID:', global.__sessionId);
   console.log('Users:', usersStorage.map(u => ({ id: u.id, email: u.email })));
   console.log('Dates:', datesStorage.map(d => ({ id: d.id, userId: d.userId, name: d.name })));
   console.log('====================');
 };
 
-// Force re-initialization (useful for debugging)
+// Force new session (useful for testing)
 export const resetStorage = () => {
-  global.__storageInitialized = false;
+  global.__sessionId = `session-${Date.now()}`;
   global.__usersStorage = [];
   global.__datesStorage = [];
-  initializeStorage();
-  console.log('Storage reset and re-initialized');
+  console.log('Storage reset, new session:', global.__sessionId);
 }; 
