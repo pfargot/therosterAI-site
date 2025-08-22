@@ -6,7 +6,7 @@
 
 **1. Database URL:**
 ```
-postgresql://postgres:sYtzuf-jyjkyh-4ruxqa@db.llaezdqudvtkmdfltklh.supabase.co:5432/postgres
+postgresql://postgres.llaezdqudvtkmdfltklh:sYtzuf-jyjkyh-4ruxqa@aws-1-us-east-2.pooler.supabase.com:6543/postgres
 ```
 
 **2. JWT Secret:**
@@ -18,7 +18,7 @@ aNQ+X7vdfyq7jINmGjQLcLSUTMKywVa6ErAU9l1Rm5g=
 
 | Variable Name | Value |
 |---------------|-------|
-| `DATABASE_URL` | `postgresql://postgres:sYtzuf-jyjkyh-4ruxqa@db.llaezdqudvtkmdfltklh.supabase.co:5432/postgres` |
+| `DATABASE_URL` | `postgresql://postgres.llaezdqudvtkmdfltklh:sYtzuf-jyjkyh-4ruxqa@aws-1-us-east-2.pooler.supabase.com:6543/postgres` |
 | `JWT_SECRET` | `aNQ+X7vdfyq7jINmGjQLcLSUTMKywVa6ErAU9l1Rm5g=` |
 | `NODE_ENV` | `production` |
 

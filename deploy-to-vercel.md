@@ -2,7 +2,7 @@
 
 ## ✅ **Your Database URL (Ready to Use)**
 ```
-postgresql://postgres:sYtzuf-jyjkyh-4ruxqa@db.llaezdqudvtkmdfltklh.supabase.co:5432/postgres
+postgresql://postgres.llaezdqudvtkmdfltklh:sYtzuf-jyjkyh-4ruxqa@aws-1-us-east-2.pooler.supabase.com:6543/postgres
 ```
 
 ## 📋 **Step-by-Step Deployment**
@@ -29,7 +29,7 @@ Click "Environment Variables" and add these:
 
 | Name | Value |
 |------|-------|
-| `DATABASE_URL` | `postgresql://postgres:sYtzuf-jyjkyh-4ruxqa@db.llaezdqudvtkmdfltklh.supabase.co:5432/postgres` |
+| `DATABASE_URL` | `postgresql://postgres.llaezdqudvtkmdfltklh:sYtzuf-jyjkyh-4ruxqa@aws-1-us-east-2.pooler.supabase.com:6543/postgres` |
 | `JWT_SECRET` | `aNQ+X7vdfyq7jINmGjQLcLSUTMKywVa6ErAU9l1Rm5g=` |
 | `NODE_ENV` | `production` |
 | `FRONTEND_URL` | `https://[your-project-name].vercel.app` |
