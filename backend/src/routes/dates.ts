@@ -8,10 +8,15 @@ let datesStorage: any[] = [];
 // Get all dates for current user
 router.get('/', async (req: any, res: any) => {
   try {
-    const userId = req.user?.userId || 'test-user-id';
+    // For MVP, we'll use a simple user ID from the token or fallback
+    const userId = req.user?.userId || req.headers['x-user-id'] || 'test-user-id';
     
-    // Filter dates by user (for MVP, just return all)
+    console.log('Getting dates for user:', userId);
+    console.log('Total dates in storage:', datesStorage.length);
+    
+    // Filter dates by user
     const userDates = datesStorage.filter(date => date.userId === userId);
+    console.log('User dates found:', userDates.length);
 
     res.json({
       dates: userDates,
@@ -34,8 +39,11 @@ router.get('/', async (req: any, res: any) => {
 // Create a new date
 router.post('/', async (req: any, res: any) => {
   try {
-    const userId = req.user?.userId || 'test-user-id';
+    const userId = req.user?.userId || req.headers['x-user-id'] || 'test-user-id';
     const dateData = req.body;
+
+    console.log('Creating date for user:', userId);
+    console.log('Date data:', dateData);
 
     const newDate = {
       id: Date.now().toString(),
@@ -45,6 +53,7 @@ router.post('/', async (req: any, res: any) => {
     };
 
     datesStorage.push(newDate);
+    console.log('Date saved. Total dates in storage:', datesStorage.length);
 
     res.status(201).json({
       message: 'Date created successfully',
@@ -62,7 +71,7 @@ router.post('/', async (req: any, res: any) => {
 // Get a specific date
 router.get('/:id', async (req: any, res: any) => {
   try {
-    const userId = req.user?.userId || 'test-user-id';
+    const userId = req.user?.userId || req.headers['x-user-id'] || 'test-user-id';
     const { id } = req.params;
 
     const date = datesStorage.find(d => d.id === id && d.userId === userId);
@@ -87,7 +96,7 @@ router.get('/:id', async (req: any, res: any) => {
 // Update a date
 router.put('/:id', async (req: any, res: any) => {
   try {
-    const userId = req.user?.userId || 'test-user-id';
+    const userId = req.user?.userId || req.headers['x-user-id'] || 'test-user-id';
     const { id } = req.params;
     const updateData = req.body;
 
@@ -118,7 +127,7 @@ router.put('/:id', async (req: any, res: any) => {
 // Delete a date
 router.delete('/:id', async (req: any, res: any) => {
   try {
-    const userId = req.user?.userId || 'test-user-id';
+    const userId = req.user?.userId || req.headers['x-user-id'] || 'test-user-id';
     const { id } = req.params;
 
     const dateIndex = datesStorage.findIndex(d => d.id === id && d.userId === userId);

@@ -1,9 +1,13 @@
 import { Router } from 'express';
 import { body, validationResult } from 'express-validator';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import { sendWelcomeEmail } from '../services/emailService';
 
 const router = Router();
+
+// In-memory user storage for MVP (replace with database later)
+let usersStorage: any[] = [];
 
 // Register endpoint (simplified for testing)
 router.post('/register', [
@@ -19,17 +23,33 @@ router.post('/register', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, username, password, firstName, lastName } = req.body;
+    const { email, username, firstName, lastName, password } = req.body;
 
-    // For testing purposes, just return success
-    // In production, you'd check database and create user
+    // Check if user already exists
+    const existingUser = usersStorage.find(user => user.email === email || user.username === username);
+    if (existingUser) {
+      return res.status(400).json({
+        error: 'User already exists',
+        message: 'A user with this email or username already exists'
+      });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Create user
     const mockUser = {
-      id: 'test-user-id',
+      id: `user-${Date.now()}`,
       email,
       username,
       firstName,
-      lastName
+      lastName,
+      password: hashedPassword,
+      createdAt: new Date().toISOString()
     };
+
+    // Save user to storage
+    usersStorage.push(mockUser);
 
     // Generate JWT token
     const token = jwt.sign(
@@ -38,9 +58,23 @@ router.post('/register', [
       { expiresIn: '7d' }
     );
 
+    // Send welcome email (don't await to avoid blocking response)
+    sendWelcomeEmail(email, firstName || username).then(success => {
+      if (success) {
+        console.log('Welcome email sent successfully to:', email);
+      } else {
+        console.log('Failed to send welcome email to:', email);
+      }
+    }).catch(error => {
+      console.error('Error sending welcome email:', error);
+    });
+
+    // Return user data (without password)
+    const { password: _, ...userData } = mockUser;
+
     res.status(201).json({
-      message: 'User registered successfully (test mode)',
-      user: mockUser,
+      message: 'User registered successfully',
+      user: userData,
       token
     });
   } catch (error) {
@@ -65,26 +99,37 @@ router.post('/login', [
 
     const { email, password } = req.body;
 
-    // For testing purposes, just return success
-    // In production, you'd verify against database
-    const mockUser = {
-      id: 'test-user-id',
-      email,
-      username: 'testuser',
-      firstName: 'Test',
-      lastName: 'User'
-    };
+    // Find user
+    const user = usersStorage.find(u => u.email === email);
+    if (!user) {
+      return res.status(401).json({
+        error: 'Invalid credentials',
+        message: 'Email or password is incorrect'
+      });
+    }
+
+    // Check password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({
+        error: 'Invalid credentials',
+        message: 'Email or password is incorrect'
+      });
+    }
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: mockUser.id, email: mockUser.email },
+      { userId: user.id, email: user.email },
       process.env.JWT_SECRET || 'fallback-secret',
       { expiresIn: '7d' }
     );
 
-    res.status(200).json({
-      message: 'Login successful (test mode)',
-      user: mockUser,
+    // Return user data (without password)
+    const { password: _, ...userData } = user;
+
+    res.json({
+      message: 'Login successful',
+      user: userData,
       token
     });
   } catch (error) {
@@ -97,22 +142,34 @@ router.post('/login', [
 });
 
 // Verify token endpoint
-router.get('/verify', async (req: any, res: any) => {
+router.post('/verify', async (req: any, res: any) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
-    
+
     if (!token) {
       return res.status(401).json({
         error: 'No token provided',
-        message: 'Authorization token is required'
+        message: 'Authentication token is required'
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
     
-    res.status(200).json({
-      message: 'Token is valid',
-      user: decoded
+    // Find user
+    const user = usersStorage.find(u => u.id === decoded.userId);
+    if (!user) {
+      return res.status(401).json({
+        error: 'Invalid token',
+        message: 'User not found'
+      });
+    }
+
+    // Return user data (without password)
+    const { password: _, ...userData } = user;
+
+    res.json({
+      message: 'Token verified successfully',
+      user: userData
     });
   } catch (error) {
     console.error('Token verification error:', error);

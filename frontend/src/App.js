@@ -53,26 +53,42 @@ function App() {
         const data = await response.json();
         setUser(data.user);
         // Load user's dates
-        loadUserDates();
+        await loadUserDates();
       } else {
+        console.log('Token verification failed, removing token');
         localStorage.removeItem('token');
+        setUser(null);
+        setDates([]);
       }
     } catch (error) {
+      console.error('Token verification error:', error);
       localStorage.removeItem('token');
+      setUser(null);
+      setDates([]);
     }
   };
 
   const loadUserDates = async () => {
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.log('No token found, skipping loadUserDates');
+        return;
+      }
+
       const response = await fetch(`${BACKEND_URL}/api/dates`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
       
       if (response.ok) {
         const data = await response.json();
+        console.log('Loaded dates:', data.dates);
         setDates(data.dates);
+      } else {
+        console.error('Failed to load dates:', response.status);
       }
     } catch (error) {
       console.error('Error loading dates:', error);
@@ -96,7 +112,14 @@ function App() {
         localStorage.setItem('token', data.token);
         setUser(data.user);
         setAuthForm({ email: '', password: '', username: '', firstName: '', lastName: '' });
-        loadUserDates();
+        
+        // Load user's dates after successful authentication
+        await loadUserDates();
+        
+        // Show success message
+        if (!isLogin) {
+          alert('Welcome to Roster.AI! Your account has been created successfully.');
+        }
       } else {
         const errorData = await response.json();
         alert(errorData.message || 'Authentication failed');
@@ -156,21 +179,40 @@ function App() {
 
   const saveDateToBackend = async (dateData) => {
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No token found for saving date');
+        alert('Please log in to save dates');
+        return;
+      }
+
+      console.log('Saving date to backend:', dateData);
+      
       const response = await fetch(`${BACKEND_URL}/api/dates`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(dateData)
       });
       
       if (response.ok) {
-        loadUserDates();
+        const result = await response.json();
+        console.log('Date saved successfully:', result);
+        
+        // Reload dates to get the updated roster
+        await loadUserDates();
+        
+        // Show success message
+        alert('Date added to your roster successfully!');
       } else {
-        alert('Failed to save date');
+        const errorData = await response.json();
+        console.error('Failed to save date:', errorData);
+        alert('Failed to save date: ' + (errorData.message || 'Unknown error'));
       }
     } catch (error) {
+      console.error('Error saving date:', error);
       alert('Error saving date: ' + error.message);
     }
   };
