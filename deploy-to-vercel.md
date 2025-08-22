@@ -1,8 +1,8 @@
 # 🚀 Deploy Roster.AI to Vercel
 
-## ✅ **Your Database URL**
+## ✅ **Your Database URL (Ready to Use)**
 ```
-postgresql://postgres:[YOUR-PASSWORD]@db.llaezdqudvtkmdfltklh.supabase.co:5432/postgres
+postgresql://postgres:sYtzuf-jyjkyh-4ruxqa@db.llaezdqudvtkmdfltklh.supabase.co:5432/postgres
 ```
 
 ## 📋 **Step-by-Step Deployment**
@@ -29,12 +29,10 @@ Click "Environment Variables" and add these:
 
 | Name | Value |
 |------|-------|
-| `DATABASE_URL` | `postgresql://postgres:[YOUR-PASSWORD]@db.llaezdqudvtkmdfltklh.supabase.co:5432/postgres` |
+| `DATABASE_URL` | `postgresql://postgres:sYtzuf-jyjkyh-4ruxqa@db.llaezdqudvtkmdfltklh.supabase.co:5432/postgres` |
 | `JWT_SECRET` | `aNQ+X7vdfyq7jINmGjQLcLSUTMKywVa6ErAU9l1Rm5g=` |
 | `NODE_ENV` | `production` |
 | `FRONTEND_URL` | `https://[your-project-name].vercel.app` |
-
-**⚠️ Important:** Replace `[YOUR-PASSWORD]` with your actual Supabase database password!
 
 ### **Step 5: Deploy**
 1. **Click "Deploy"**
