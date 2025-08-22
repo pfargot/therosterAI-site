@@ -180,4 +180,41 @@ router.post('/verify', async (req: any, res: any) => {
   }
 });
 
+// Test email endpoint
+router.post('/test-email', async (req: any, res: any) => {
+  try {
+    const { email, name } = req.body;
+    
+    if (!email || !name) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        message: 'Email and name are required'
+      });
+    }
+
+    console.log('Testing email functionality for:', email);
+    
+    const success = await sendWelcomeEmail(email, name);
+    
+    if (success) {
+      res.json({
+        message: 'Test email sent successfully',
+        email: email,
+        name: name
+      });
+    } else {
+      res.status(500).json({
+        error: 'Failed to send test email',
+        message: 'Email service is not working properly'
+      });
+    }
+  } catch (error) {
+    console.error('Test email error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to send test email'
+    });
+  }
+});
+
 export default router; 
