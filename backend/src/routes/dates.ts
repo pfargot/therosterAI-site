@@ -1,9 +1,7 @@
 import { Router } from 'express';
+import { createDate, findDatesByUserId, findDateById, updateDate, deleteDate, getStorageStats } from '../services/storageService';
 
 const router = Router();
-
-// In-memory storage for MVP (replace with database later)
-let datesStorage: any[] = [];
 
 // Get all dates for current user
 router.get('/', async (req: any, res: any) => {
@@ -12,10 +10,10 @@ router.get('/', async (req: any, res: any) => {
     const userId = req.user?.userId || req.headers['x-user-id'] || 'test-user-id';
     
     console.log('Getting dates for user:', userId);
-    console.log('Total dates in storage:', datesStorage.length);
+    console.log('Storage stats:', getStorageStats());
     
-    // Filter dates by user
-    const userDates = datesStorage.filter(date => date.userId === userId);
+    // Get dates for user
+    const userDates = findDatesByUserId(userId);
     console.log('User dates found:', userDates.length);
 
     res.json({
@@ -52,8 +50,8 @@ router.post('/', async (req: any, res: any) => {
       createdAt: new Date().toISOString()
     };
 
-    datesStorage.push(newDate);
-    console.log('Date saved. Total dates in storage:', datesStorage.length);
+    createDate(newDate);
+    console.log('Date saved. Storage stats:', getStorageStats());
 
     res.status(201).json({
       message: 'Date created successfully',
@@ -74,9 +72,8 @@ router.get('/:id', async (req: any, res: any) => {
     const userId = req.user?.userId || req.headers['x-user-id'] || 'test-user-id';
     const { id } = req.params;
 
-    const date = datesStorage.find(d => d.id === id && d.userId === userId);
-
-    if (!date) {
+    const date = findDateById(id);
+    if (!date || date.userId !== userId) {
       return res.status(404).json({
         error: 'Date not found',
         message: 'The specified date could not be found'
@@ -100,20 +97,17 @@ router.put('/:id', async (req: any, res: any) => {
     const { id } = req.params;
     const updateData = req.body;
 
-    const dateIndex = datesStorage.findIndex(d => d.id === id && d.userId === userId);
-
-    if (dateIndex === -1) {
+    const updatedDate = updateDate(id, userId, updateData);
+    if (!updatedDate) {
       return res.status(404).json({
         error: 'Date not found',
         message: 'The specified date could not be found'
       });
     }
 
-    datesStorage[dateIndex] = { ...datesStorage[dateIndex], ...updateData };
-
     res.json({
       message: 'Date updated successfully',
-      date: datesStorage[dateIndex]
+      date: updatedDate
     });
   } catch (error) {
     console.error('Update date error:', error);
@@ -130,16 +124,13 @@ router.delete('/:id', async (req: any, res: any) => {
     const userId = req.user?.userId || req.headers['x-user-id'] || 'test-user-id';
     const { id } = req.params;
 
-    const dateIndex = datesStorage.findIndex(d => d.id === id && d.userId === userId);
-
-    if (dateIndex === -1) {
+    const success = deleteDate(id, userId);
+    if (!success) {
       return res.status(404).json({
         error: 'Date not found',
         message: 'The specified date could not be found'
       });
     }
-
-    datesStorage.splice(dateIndex, 1);
 
     res.json({
       message: 'Date deleted successfully'

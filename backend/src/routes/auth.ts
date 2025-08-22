@@ -3,13 +3,11 @@ import { body, validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { sendWelcomeEmail } from '../services/emailService';
+import { createUser, findUserByEmail, findUserById, findUserByUsername } from '../services/storageService';
 
 const router = Router();
 
-// In-memory user storage for MVP (replace with database later)
-let usersStorage: any[] = [];
-
-// Register endpoint (simplified for testing)
+// Register endpoint
 router.post('/register', [
   body('email').isEmail().normalizeEmail(),
   body('username').isLength({ min: 3 }).matches(/^[a-zA-Z0-9_]+$/),
@@ -26,7 +24,7 @@ router.post('/register', [
     const { email, username, firstName, lastName, password } = req.body;
 
     // Check if user already exists
-    const existingUser = usersStorage.find(user => user.email === email || user.username === username);
+    const existingUser = findUserByEmail(email) || findUserByUsername(username);
     if (existingUser) {
       return res.status(400).json({
         error: 'User already exists',
@@ -38,7 +36,7 @@ router.post('/register', [
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Create user
-    const mockUser = {
+    const newUser = {
       id: `user-${Date.now()}`,
       email,
       username,
@@ -49,11 +47,11 @@ router.post('/register', [
     };
 
     // Save user to storage
-    usersStorage.push(mockUser);
+    createUser(newUser);
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: mockUser.id, email: mockUser.email },
+      { userId: newUser.id, email: newUser.email },
       process.env.JWT_SECRET || 'fallback-secret',
       { expiresIn: '7d' }
     );
@@ -70,7 +68,7 @@ router.post('/register', [
     });
 
     // Return user data (without password)
-    const { password: _, ...userData } = mockUser;
+    const { password: _, ...userData } = newUser;
 
     res.status(201).json({
       message: 'User registered successfully',
@@ -86,7 +84,7 @@ router.post('/register', [
   }
 });
 
-// Login endpoint (simplified for testing)
+// Login endpoint
 router.post('/login', [
   body('email').isEmail().normalizeEmail(),
   body('password').notEmpty()
@@ -100,7 +98,7 @@ router.post('/login', [
     const { email, password } = req.body;
 
     // Find user
-    const user = usersStorage.find(u => u.email === email);
+    const user = findUserByEmail(email);
     if (!user) {
       return res.status(401).json({
         error: 'Invalid credentials',
@@ -156,7 +154,7 @@ router.post('/verify', async (req: any, res: any) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
     
     // Find user
-    const user = usersStorage.find(u => u.id === decoded.userId);
+    const user = findUserById(decoded.userId);
     if (!user) {
       return res.status(401).json({
         error: 'Invalid token',
