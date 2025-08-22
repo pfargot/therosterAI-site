@@ -2,12 +2,10 @@ import { Router } from 'express';
 import { body, validationResult } from 'express-validator';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
 
 const router = Router();
-const prisma = new PrismaClient();
 
-// Register endpoint
+// Register endpoint (simplified for testing)
 router.post('/register', [
   body('email').isEmail().normalizeEmail(),
   body('username').isLength({ min: 3 }).matches(/^[a-zA-Z0-9_]+$/),
@@ -23,54 +21,26 @@ router.post('/register', [
 
     const { email, username, password, firstName, lastName } = req.body;
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email },
-          { username }
-        ]
-      }
-    });
-
-    if (existingUser) {
-      return res.status(400).json({
-        error: 'User already exists',
-        message: 'Email or username is already taken'
-      });
-    }
-
-    // Hash password
-    const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        email,
-        username,
-        firstName,
-        lastName,
-        password: hashedPassword
-      }
-    });
+    // For testing purposes, just return success
+    // In production, you'd check database and create user
+    const mockUser = {
+      id: 'test-user-id',
+      email,
+      username,
+      firstName,
+      lastName
+    };
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
+      { userId: mockUser.id, email: mockUser.email },
       process.env.JWT_SECRET || 'fallback-secret',
       { expiresIn: '7d' }
     );
 
     res.status(201).json({
-      message: 'User registered successfully',
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName
-      },
+      message: 'User registered successfully (test mode)',
+      user: mockUser,
       token
     });
   } catch (error) {
@@ -82,7 +52,7 @@ router.post('/register', [
   }
 });
 
-// Login endpoint
+// Login endpoint (simplified for testing)
 router.post('/login', [
   body('email').isEmail().normalizeEmail(),
   body('password').notEmpty()
@@ -95,44 +65,26 @@ router.post('/login', [
 
     const { email, password } = req.body;
 
-    // Find user
-    const user = await prisma.user.findUnique({
-      where: { email }
-    });
-
-    if (!user) {
-      return res.status(401).json({
-        error: 'Invalid credentials',
-        message: 'Email or password is incorrect'
-      });
-    }
-
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
-      return res.status(401).json({
-        error: 'Invalid credentials',
-        message: 'Email or password is incorrect'
-      });
-    }
+    // For testing purposes, just return success
+    // In production, you'd verify against database
+    const mockUser = {
+      id: 'test-user-id',
+      email,
+      username: 'testuser',
+      firstName: 'Test',
+      lastName: 'User'
+    };
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
+      { userId: mockUser.id, email: mockUser.email },
       process.env.JWT_SECRET || 'fallback-secret',
       { expiresIn: '7d' }
     );
 
-    res.json({
-      message: 'Login successful',
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        isPremium: user.isPremium
-      },
+    res.status(200).json({
+      message: 'Login successful (test mode)',
+      user: mockUser,
       token
     });
   } catch (error) {
@@ -148,38 +100,19 @@ router.post('/login', [
 router.get('/verify', async (req: any, res: any) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
-
+    
     if (!token) {
       return res.status(401).json({
         error: 'No token provided',
-        message: 'Authentication token is required'
+        message: 'Authorization token is required'
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
     
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        firstName: true,
-        lastName: true,
-        isPremium: true
-      }
-    });
-
-    if (!user) {
-      return res.status(401).json({
-        error: 'Invalid token',
-        message: 'User not found'
-      });
-    }
-
-    res.json({
+    res.status(200).json({
       message: 'Token is valid',
-      user
+      user: decoded
     });
   } catch (error) {
     console.error('Token verification error:', error);

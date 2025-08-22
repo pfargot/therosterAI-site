@@ -45,11 +45,29 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Health check endpoint
+// Health check endpoint (no database required)
 app.get('/health', (req, res) => {
+  try {
+    res.status(200).json({
+      status: 'OK',
+      message: 'Roster.AI API is running',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+  } catch (error) {
+    console.error('Health check error:', error);
+    res.status(500).json({
+      status: 'ERROR',
+      message: 'Health check failed',
+      error: error.message
+    });
+  }
+});
+
+// Simple test endpoint
+app.get('/api/test', (req, res) => {
   res.status(200).json({
-    status: 'OK',
-    message: 'Roster.AI API is running',
+    message: 'API is working!',
     timestamp: new Date().toISOString()
   });
 });
