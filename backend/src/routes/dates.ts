@@ -82,7 +82,8 @@ router.post('/', async (req: any, res: any) => {
     };
 
     createDate(newDate);
-    console.log('Date saved. Storage stats:', getStorageStats());
+    const stats = getStorageStats();
+    console.log('Date saved. Storage stats:', stats);
 
     res.status(201).json({
       message: 'Date created successfully',
