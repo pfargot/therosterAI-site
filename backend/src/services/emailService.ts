@@ -3,8 +3,11 @@ import nodemailer from 'nodemailer';
 // Create a test account for development (replace with real SMTP in production)
 const createTestAccount = async () => {
   try {
+    console.log('Creating test email account...');
     const testAccount = await nodemailer.createTestAccount();
-    return nodemailer.createTransport({
+    console.log('Test account created:', testAccount.user);
+    
+    const transporter = nodemailer.createTransport({
       host: 'smtp.ethereal.email',
       port: 587,
       secure: false,
@@ -13,6 +16,9 @@ const createTestAccount = async () => {
         pass: testAccount.pass,
       },
     });
+    
+    console.log('Test transporter created successfully');
+    return transporter;
   } catch (error) {
     console.error('Error creating test account:', error);
     return null;
@@ -21,7 +27,8 @@ const createTestAccount = async () => {
 
 // For production, use real SMTP settings
 const createProductionTransporter = () => {
-  return nodemailer.createTransport({
+  console.log('Creating production email transporter...');
+  const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.SMTP_PORT || '587'),
     secure: false,
@@ -30,17 +37,25 @@ const createProductionTransporter = () => {
       pass: process.env.SMTP_PASS,
     },
   });
+  console.log('Production transporter created');
+  return transporter;
 };
 
 export const sendWelcomeEmail = async (userEmail: string, userName: string) => {
   try {
+    console.log('Starting welcome email process for:', userEmail);
+    
     const isProduction = process.env.NODE_ENV === 'production';
+    console.log('Environment:', isProduction ? 'production' : 'development');
+    
     const transporter = isProduction ? createProductionTransporter() : await createTestAccount();
 
     if (!transporter) {
       console.error('Failed to create email transporter');
       return false;
     }
+
+    console.log('Email transporter created successfully');
 
     const mailOptions = {
       from: isProduction ? process.env.SMTP_USER : '"Roster.AI" <noreply@roster.ai>',
@@ -88,23 +103,39 @@ export const sendWelcomeEmail = async (userEmail: string, userName: string) => {
       `,
     };
 
+    console.log('Sending email with options:', {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject
+    });
+
     const info = await transporter.sendMail(mailOptions);
     
     if (isProduction) {
       console.log('Welcome email sent successfully to:', userEmail);
+      console.log('Message ID:', info.messageId);
     } else {
-      console.log('Test email sent. Preview URL:', nodemailer.getTestMessageUrl(info));
+      console.log('Test email sent successfully!');
+      console.log('Preview URL:', nodemailer.getTestMessageUrl(info));
+      console.log('Message ID:', info.messageId);
     }
     
     return true;
   } catch (error) {
     console.error('Error sending welcome email:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
     return false;
   }
 };
 
 export const sendPasswordResetEmail = async (userEmail: string, resetToken: string) => {
   try {
+    console.log('Starting password reset email process for:', userEmail);
+    
     const isProduction = process.env.NODE_ENV === 'production';
     const transporter = isProduction ? createProductionTransporter() : await createTestAccount();
 

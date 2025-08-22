@@ -57,15 +57,17 @@ router.post('/register', [
     );
 
     // Send welcome email (don't await to avoid blocking response)
+    console.log('About to send welcome email to:', email);
     sendWelcomeEmail(email, firstName || username).then(success => {
       if (success) {
-        console.log('Welcome email sent successfully to:', email);
+        console.log('✅ Welcome email sent successfully to:', email);
       } else {
-        console.log('Failed to send welcome email to:', email);
+        console.log('❌ Failed to send welcome email to:', email);
       }
     }).catch(error => {
-      console.error('Error sending welcome email:', error);
+      console.error('💥 Error sending welcome email:', error);
     });
+    console.log('Welcome email request initiated (non-blocking)');
 
     // Return user data (without password)
     const { password: _, ...userData } = newUser;
