@@ -31,12 +31,12 @@ function App() {
   const [uploadingImage, setUploadingImage] = useState(false);
 
   // Check if user is logged in on app start
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       verifyToken(token);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const verifyToken = async (token) => {
