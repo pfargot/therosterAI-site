@@ -33,6 +33,7 @@ Click "Environment Variables" and add these:
 | `JWT_SECRET` | `aNQ+X7vdfyq7jINmGjQLcLSUTMKywVa6ErAU9l1Rm5g=` |
 | `NODE_ENV` | `production` |
 | `FRONTEND_URL` | `https://[your-project-name].vercel.app` |
+| `REACT_APP_BACKEND_URL` | `https://[your-project-name].vercel.app` |
 
 ### **Step 5: Deploy**
 1. **Click "Deploy"**

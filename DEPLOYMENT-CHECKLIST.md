@@ -21,6 +21,7 @@ aNQ+X7vdfyq7jINmGjQLcLSUTMKywVa6ErAU9l1Rm5g=
 | `DATABASE_URL` | `postgresql://postgres.llaezdqudvtkmdfltklh:sYtzuf-jyjkyh-4ruxqa@aws-1-us-east-2.pooler.supabase.com:6543/postgres` |
 | `JWT_SECRET` | `aNQ+X7vdfyq7jINmGjQLcLSUTMKywVa6ErAU9l1Rm5g=` |
 | `NODE_ENV` | `production` |
+| `REACT_APP_BACKEND_URL` | `https://[your-project-name].vercel.app` |
 
 ### **🚀 Deployment Steps:**
 
@@ -32,7 +33,7 @@ aNQ+X7vdfyq7jINmGjQLcLSUTMKywVa6ErAU9l1Rm5g=
    - Framework: `Other`
    - Build Command: `npm run build`
    - Output Directory: `frontend/build`
-6. **Add the 3 environment variables above**
+6. **Add the 4 environment variables above**
 7. **Click "Deploy"**
 
 ### **⏱️ Expected Timeline:**
