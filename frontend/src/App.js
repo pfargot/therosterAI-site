@@ -76,6 +76,7 @@ function App() {
         return;
       }
 
+      console.log('Loading user dates...');
       const response = await fetch(`${BACKEND_URL}/api/dates`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -89,6 +90,8 @@ function App() {
         setDates(data.dates);
       } else {
         console.error('Failed to load dates:', response.status);
+        const errorData = await response.json();
+        console.error('Error details:', errorData);
       }
     } catch (error) {
       console.error('Error loading dates:', error);
@@ -100,32 +103,37 @@ function App() {
     setLoading(true);
     
     try {
-      const endpoint = isLogin ? '/login' : '/register';
-      const response = await fetch(`${BACKEND_URL}/api/auth${endpoint}`, {
+      const endpoint = isLogin ? 'login' : 'register';
+      const response = await fetch(`${BACKEND_URL}/api/auth/${endpoint}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(authForm)
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem('token', data.token);
         setUser(data.user);
-        setAuthForm({ email: '', password: '', username: '', firstName: '', lastName: '' });
         
-        // Load user's dates after successful authentication
+        // Load user's dates immediately after authentication
         await loadUserDates();
         
-        // Show success message
         if (!isLogin) {
-          alert('Welcome to Roster.AI! Your account has been created successfully.');
+          alert('🎉 Registration successful! Welcome to Roster.AI!');
+        } else {
+          alert('✅ Login successful! Welcome back!');
         }
+        
+        setActiveTab('home');
       } else {
         const errorData = await response.json();
-        alert(errorData.message || 'Authentication failed');
+        alert(`Authentication failed: ${errorData.message || 'Unknown error'}`);
       }
     } catch (error) {
-      alert('Error: ' + error.message);
+      console.error('Auth error:', error);
+      alert('Authentication error: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -140,13 +148,12 @@ function App() {
 
   const addDate = () => {
     if (!newDate.name.trim()) {
-      alert('Please enter a name');
+      alert('Please enter a name for the date');
       return;
     }
 
     const dateToAdd = {
       ...newDate,
-      id: Date.now(),
       date: new Date().toLocaleDateString()
     };
 
@@ -154,27 +161,11 @@ function App() {
       // Save to backend
       saveDateToBackend(dateToAdd);
     } else {
-      // Save to local state
+      // Save to local state (fallback)
       setDates([...dates, dateToAdd]);
+      alert('Date added to local roster (login to save permanently)');
+      setActiveTab('roster');
     }
-
-    setNewDate({ 
-      name: '', 
-      rating: 5, 
-      notes: '',
-      chemistryRating: 5,
-      attractionRating: 5,
-      vibeCheck: 'meh',
-      emotionalImpact: 'comfortable',
-      conversationQuality: 'flowing',
-      effortLevel: 'casual',
-      bodyLanguage: 'open',
-      greenFlags: [],
-      redFlags: [],
-      profileImage: null,
-      imageAnalysis: null
-    });
-    setActiveTab('roster');
   };
 
   const saveDateToBackend = async (dateData) => {
@@ -182,7 +173,7 @@ function App() {
       const token = localStorage.getItem('token');
       if (!token) {
         console.error('No token found for saving date');
-        alert('Please log in to save dates');
+        alert('❌ Please log in to save dates');
         return;
       }
 
@@ -205,15 +196,36 @@ function App() {
         await loadUserDates();
         
         // Show success message
-        alert('Date added to your roster successfully!');
+        alert('🎉 Date added to your roster successfully!');
+        
+        // Reset the form
+        setNewDate({ 
+          name: '', 
+          rating: 5, 
+          notes: '',
+          chemistryRating: 5,
+          attractionRating: 5,
+          vibeCheck: 'meh',
+          emotionalImpact: 'comfortable',
+          conversationQuality: 'flowing',
+          effortLevel: 'casual',
+          bodyLanguage: 'open',
+          greenFlags: [],
+          redFlags: [],
+          profileImage: null,
+          imageAnalysis: null
+        });
+        
+        // Navigate to roster to see the new date
+        setActiveTab('roster');
       } else {
         const errorData = await response.json();
         console.error('Failed to save date:', errorData);
-        alert('Failed to save date: ' + (errorData.message || 'Unknown error'));
+        alert('❌ Failed to save date: ' + (errorData.message || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error saving date:', error);
-      alert('Error saving date: ' + error.message);
+      alert('❌ Error saving date: ' + error.message);
     }
   };
 
@@ -264,9 +276,17 @@ function App() {
         return;
       }
 
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        setUploadingImage(false);
+        return;
+      }
+
       const formData = new FormData();
       formData.append('image', file);
 
+      console.log('Sending image upload request...');
       const response = await fetch(`${BACKEND_URL}/api/upload/profile-image`, {
         method: 'POST',
         body: formData
@@ -277,13 +297,17 @@ function App() {
       if (response.ok) {
         const data = await response.json();
         console.log('Upload successful:', data);
-        setNewDate({ ...newDate, profileImage: data.imageUrl });
+        
+        // Update the newDate state with the image URL
+        const updatedNewDate = { ...newDate, profileImage: data.imageUrl };
+        setNewDate(updatedNewDate);
         
         // Show success message
-        alert('Image uploaded successfully! Analyzing with AI...');
+        alert('✅ Image uploaded successfully! Analyzing with AI...');
         
         // Analyze the uploaded image
         try {
+          console.log('Starting AI analysis...');
           const analysisResponse = await fetch(`${BACKEND_URL}/api/ai/analyze-image`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -293,24 +317,30 @@ function App() {
           if (analysisResponse.ok) {
             const analysisData = await analysisResponse.json();
             console.log('AI analysis:', analysisData);
-            setNewDate({ ...newDate, profileImage: data.imageUrl, imageAnalysis: analysisData.analysis });
-            alert('AI analysis complete! Check the analysis below.');
+            
+            // Update with both image URL and analysis
+            setNewDate({ 
+              ...updatedNewDate, 
+              imageAnalysis: analysisData.analysis 
+            });
+            
+            alert('🎉 AI analysis complete! Check the analysis below.');
           } else {
             console.log('AI analysis failed, but image uploaded successfully');
-            setNewDate({ ...newDate, profileImage: data.imageUrl });
+            alert('✅ Image uploaded! AI analysis failed, but you can still use the image.');
           }
         } catch (analysisError) {
           console.error('AI analysis error:', analysisError);
-          setNewDate({ ...newDate, profileImage: data.imageUrl });
+          alert('✅ Image uploaded! AI analysis failed, but you can still use the image.');
         }
       } else {
         const errorData = await response.json();
         console.error('Upload failed:', errorData);
-        alert('Failed to upload image: ' + (errorData.message || 'Unknown error'));
+        alert('❌ Failed to upload image: ' + (errorData.message || 'Unknown error'));
       }
     } catch (error) {
       console.error('Upload error:', error);
-      alert('Error uploading image: ' + error.message);
+      alert('❌ Error uploading image: ' + error.message);
     } finally {
       setUploadingImage(false);
     }

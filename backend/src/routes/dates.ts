@@ -1,13 +1,35 @@
 import { Router } from 'express';
+import jwt from 'jsonwebtoken';
 import { createDate, findDatesByUserId, findDateById, updateDate, deleteDate, getStorageStats } from '../services/storageService';
 
 const router = Router();
 
+// Helper function to extract user ID from token
+const extractUserId = (req: any): string | null => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) return null;
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
+    return decoded.userId;
+  } catch (error) {
+    console.error('Token extraction error:', error);
+    return null;
+  }
+};
+
 // Get all dates for current user
 router.get('/', async (req: any, res: any) => {
   try {
-    // For MVP, we'll use a simple user ID from the token or fallback
-    const userId = req.user?.userId || req.headers['x-user-id'] || 'test-user-id';
+    // Extract user ID from JWT token
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Authentication required',
+        message: 'Valid authentication token is required'
+      });
+    }
     
     console.log('Getting dates for user:', userId);
     console.log('Storage stats:', getStorageStats());
@@ -37,7 +59,16 @@ router.get('/', async (req: any, res: any) => {
 // Create a new date
 router.post('/', async (req: any, res: any) => {
   try {
-    const userId = req.user?.userId || req.headers['x-user-id'] || 'test-user-id';
+    // Extract user ID from JWT token
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Authentication required',
+        message: 'Valid authentication token is required'
+      });
+    }
+    
     const dateData = req.body;
 
     console.log('Creating date for user:', userId);
@@ -69,7 +100,16 @@ router.post('/', async (req: any, res: any) => {
 // Get a specific date
 router.get('/:id', async (req: any, res: any) => {
   try {
-    const userId = req.user?.userId || req.headers['x-user-id'] || 'test-user-id';
+    // Extract user ID from JWT token
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Authentication required',
+        message: 'Valid authentication token is required'
+      });
+    }
+    
     const { id } = req.params;
 
     const date = findDateById(id);
@@ -93,7 +133,16 @@ router.get('/:id', async (req: any, res: any) => {
 // Update a date
 router.put('/:id', async (req: any, res: any) => {
   try {
-    const userId = req.user?.userId || req.headers['x-user-id'] || 'test-user-id';
+    // Extract user ID from JWT token
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Authentication required',
+        message: 'Valid authentication token is required'
+      });
+    }
+    
     const { id } = req.params;
     const updateData = req.body;
 
@@ -121,7 +170,16 @@ router.put('/:id', async (req: any, res: any) => {
 // Delete a date
 router.delete('/:id', async (req: any, res: any) => {
   try {
-    const userId = req.user?.userId || req.headers['x-user-id'] || 'test-user-id';
+    // Extract user ID from JWT token
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Authentication required',
+        message: 'Valid authentication token is required'
+      });
+    }
+    
     const { id } = req.params;
 
     const success = deleteDate(id, userId);
