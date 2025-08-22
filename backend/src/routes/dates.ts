@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
-import { createDate, findDatesByUserId, findDateById, updateDate, deleteDate, getStorageStats, reloadFromFiles } from '../services/storageService';
+import { createDate, findDatesByUserId, findDateById, updateDate, deleteDate, getStorageStats, debugStorage } from '../services/storageService';
 
 const router = Router();
 
@@ -31,11 +31,8 @@ router.get('/', async (req: any, res: any) => {
       });
     }
     
-    // Reload data from files to ensure consistency
-    reloadFromFiles();
-    
     console.log('Getting dates for user:', userId);
-    console.log('Storage stats:', getStorageStats());
+    debugStorage();
     
     // Get dates for user
     const userDates = findDatesByUserId(userId);

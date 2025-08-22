@@ -1,8 +1,5 @@
-// Enhanced storage service for Vercel serverless functions
-// Uses global variables with fallback to file-based storage
-
-import fs from 'fs';
-import path from 'path';
+// Simple in-memory storage optimized for Vercel serverless functions
+// In production, this should be replaced with a real database
 
 interface User {
   id: string;
@@ -30,76 +27,21 @@ interface Date {
   createdAt: string;
 }
 
-// Storage file paths
-const STORAGE_DIR = path.join(__dirname, '../../storage');
-const USERS_FILE = path.join(STORAGE_DIR, 'users.json');
-const DATES_FILE = path.join(STORAGE_DIR, 'dates.json');
-
-// Ensure storage directory exists
-if (!fs.existsSync(STORAGE_DIR)) {
-  fs.mkdirSync(STORAGE_DIR, { recursive: true });
-}
-
-// Initialize storage files if they don't exist
-if (!fs.existsSync(USERS_FILE)) {
-  fs.writeFileSync(USERS_FILE, JSON.stringify([], null, 2));
-}
-
-if (!fs.existsSync(DATES_FILE)) {
-  fs.writeFileSync(DATES_FILE, JSON.stringify([], null, 2));
-}
-
-// Global storage (for current function invocation)
+// Global storage (persists across function invocations in Vercel)
 declare global {
   var __usersStorage: User[] | undefined;
   var __datesStorage: Date[] | undefined;
 }
 
-// Load data from files
-const loadUsersFromFile = (): User[] => {
-  try {
-    const data = fs.readFileSync(USERS_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error('Error loading users from file:', error);
-    return [];
-  }
-};
-
-const loadDatesFromFile = (): Date[] => {
-  try {
-    const data = fs.readFileSync(DATES_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error('Error loading dates from file:', error);
-    return [];
-  }
-};
-
-// Save data to files
-const saveUsersToFile = (users: User[]) => {
-  try {
-    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-  } catch (error) {
-    console.error('Error saving users to file:', error);
-  }
-};
-
-const saveDatesToFile = (dates: Date[]) => {
-  try {
-    fs.writeFileSync(DATES_FILE, JSON.stringify(dates, null, 2));
-  } catch (error) {
-    console.error('Error saving dates to file:', error);
-  }
-};
-
-// Initialize storage
+// Initialize storage if it doesn't exist
 if (!global.__usersStorage) {
-  global.__usersStorage = loadUsersFromFile();
+  global.__usersStorage = [];
+  console.log('Initialized users storage');
 }
 
 if (!global.__datesStorage) {
-  global.__datesStorage = loadDatesFromFile();
+  global.__datesStorage = [];
+  console.log('Initialized dates storage');
 }
 
 export const usersStorage = global.__usersStorage;
@@ -107,8 +49,9 @@ export const datesStorage = global.__datesStorage;
 
 // User storage functions
 export const createUser = (user: User): User => {
+  console.log('Creating user:', user.email);
   usersStorage.push(user);
-  saveUsersToFile(usersStorage);
+  console.log('Total users:', usersStorage.length);
   return user;
 };
 
@@ -126,13 +69,17 @@ export const findUserByUsername = (username: string): User | undefined => {
 
 // Date storage functions
 export const createDate = (date: Date): Date => {
+  console.log('Creating date for user:', date.userId, 'Name:', date.name);
   datesStorage.push(date);
-  saveDatesToFile(datesStorage);
+  console.log('Total dates:', datesStorage.length);
   return date;
 };
 
 export const findDatesByUserId = (userId: string): Date[] => {
-  return datesStorage.filter(date => date.userId === userId);
+  console.log('Finding dates for user:', userId);
+  const userDates = datesStorage.filter(date => date.userId === userId);
+  console.log('Found dates for user:', userDates.length);
+  return userDates;
 };
 
 export const findDateById = (id: string): Date | undefined => {
@@ -144,7 +91,6 @@ export const updateDate = (id: string, userId: string, updateData: Partial<Date>
   if (dateIndex === -1) return null;
   
   datesStorage[dateIndex] = { ...datesStorage[dateIndex], ...updateData };
-  saveDatesToFile(datesStorage);
   return datesStorage[dateIndex];
 };
 
@@ -153,21 +99,24 @@ export const deleteDate = (id: string, userId: string): boolean => {
   if (dateIndex === -1) return false;
   
   datesStorage.splice(dateIndex, 1);
-  saveDatesToFile(datesStorage);
   return true;
 };
 
 // Utility functions
 export const getStorageStats = () => {
-  return {
+  const stats = {
     users: usersStorage.length,
     dates: datesStorage.length,
     uniqueUsers: new Set(datesStorage.map(d => d.userId)).size
   };
+  console.log('Storage stats:', stats);
+  return stats;
 };
 
-// Force reload from files (useful for debugging)
-export const reloadFromFiles = () => {
-  global.__usersStorage = loadUsersFromFile();
-  global.__datesStorage = loadDatesFromFile();
+// Debug function to show all data
+export const debugStorage = () => {
+  console.log('=== STORAGE DEBUG ===');
+  console.log('Users:', usersStorage.map(u => ({ id: u.id, email: u.email })));
+  console.log('Dates:', datesStorage.map(d => ({ id: d.id, userId: d.userId, name: d.name })));
+  console.log('====================');
 }; 
