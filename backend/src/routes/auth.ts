@@ -24,7 +24,7 @@ router.post('/register', [
     const { email, username, firstName, lastName, password } = req.body;
 
     // Check if user already exists
-    const existingUser = findUserByEmail(email) || findUserByUsername(username);
+    const existingUser = await findUserByEmail(email) || await findUserByUsername(username);
     if (existingUser) {
       return res.status(400).json({
         error: 'User already exists',
@@ -47,7 +47,7 @@ router.post('/register', [
     };
 
     // Save user to storage
-    createUser(newUser);
+    await createUser(newUser);
 
     // Generate JWT token
     const token = jwt.sign(
@@ -100,7 +100,7 @@ router.post('/login', [
     const { email, password } = req.body;
 
     // Find user
-    const user = findUserByEmail(email);
+    const user = await findUserByEmail(email);
     if (!user) {
       return res.status(401).json({
         error: 'Invalid credentials',
@@ -156,7 +156,7 @@ router.post('/verify', async (req: any, res: any) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
     
     // Find user
-    const user = findUserById(decoded.userId);
+    const user = await findUserById(decoded.userId);
     if (!user) {
       return res.status(401).json({
         error: 'Invalid token',

@@ -32,10 +32,10 @@ router.get('/', async (req: any, res: any) => {
     }
     
     console.log('Getting dates for user:', userId);
-    debugStorage();
+    await debugStorage();
     
     // Get dates for user
-    const userDates = findDatesByUserId(userId);
+    const userDates = await findDatesByUserId(userId);
     console.log('User dates found:', userDates.length);
 
     res.json({
@@ -81,8 +81,8 @@ router.post('/', async (req: any, res: any) => {
       createdAt: new Date().toISOString()
     };
 
-    createDate(newDate);
-    const stats = getStorageStats();
+    await createDate(newDate);
+    const stats = await getStorageStats();
     console.log('Date saved. Storage stats:', stats);
 
     res.status(201).json({
@@ -113,7 +113,7 @@ router.get('/:id', async (req: any, res: any) => {
     
     const { id } = req.params;
 
-    const date = findDateById(id);
+    const date = await findDateById(id);
     if (!date || date.userId !== userId) {
       return res.status(404).json({
         error: 'Date not found',
@@ -147,7 +147,7 @@ router.put('/:id', async (req: any, res: any) => {
     const { id } = req.params;
     const updateData = req.body;
 
-    const updatedDate = updateDate(id, userId, updateData);
+    const updatedDate = await updateDate(id, userId, updateData);
     if (!updatedDate) {
       return res.status(404).json({
         error: 'Date not found',
@@ -183,7 +183,7 @@ router.delete('/:id', async (req: any, res: any) => {
     
     const { id } = req.params;
 
-    const success = deleteDate(id, userId);
+    const success = await deleteDate(id, userId);
     if (!success) {
       return res.status(404).json({
         error: 'Date not found',
