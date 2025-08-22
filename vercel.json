@@ -22,6 +22,10 @@
       "dest": "/backend/src/index.ts"
     },
     {
+      "src": "/health",
+      "dest": "/backend/src/index.ts"
+    },
+    {
       "src": "/(.*)",
       "dest": "/frontend/$1"
     }
