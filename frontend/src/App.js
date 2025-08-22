@@ -255,6 +255,15 @@ function App() {
   const uploadImage = async (file) => {
     setUploadingImage(true);
     try {
+      console.log('Uploading image:', file.name, 'Size:', file.size);
+      
+      // Check file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('Image file must be less than 10MB');
+        setUploadingImage(false);
+        return;
+      }
+
       const formData = new FormData();
       formData.append('image', file);
 
@@ -263,25 +272,44 @@ function App() {
         body: formData
       });
 
+      console.log('Upload response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('Upload successful:', data);
         setNewDate({ ...newDate, profileImage: data.imageUrl });
         
+        // Show success message
+        alert('Image uploaded successfully! Analyzing with AI...');
+        
         // Analyze the uploaded image
-        const analysisResponse = await fetch(`${BACKEND_URL}/api/ai/analyze-image`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageUrl: data.imageUrl })
-        });
+        try {
+          const analysisResponse = await fetch(`${BACKEND_URL}/api/ai/analyze-image`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageUrl: data.imageUrl })
+          });
 
-        if (analysisResponse.ok) {
-          const analysisData = await analysisResponse.json();
-          setNewDate({ ...newDate, profileImage: data.imageUrl, imageAnalysis: analysisData.analysis });
+          if (analysisResponse.ok) {
+            const analysisData = await analysisResponse.json();
+            console.log('AI analysis:', analysisData);
+            setNewDate({ ...newDate, profileImage: data.imageUrl, imageAnalysis: analysisData.analysis });
+            alert('AI analysis complete! Check the analysis below.');
+          } else {
+            console.log('AI analysis failed, but image uploaded successfully');
+            setNewDate({ ...newDate, profileImage: data.imageUrl });
+          }
+        } catch (analysisError) {
+          console.error('AI analysis error:', analysisError);
+          setNewDate({ ...newDate, profileImage: data.imageUrl });
         }
       } else {
-        alert('Failed to upload image');
+        const errorData = await response.json();
+        console.error('Upload failed:', errorData);
+        alert('Failed to upload image: ' + (errorData.message || 'Unknown error'));
       }
     } catch (error) {
+      console.error('Upload error:', error);
       alert('Error uploading image: ' + error.message);
     } finally {
       setUploadingImage(false);
